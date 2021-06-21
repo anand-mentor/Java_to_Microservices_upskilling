@@ -1,0 +1,58 @@
+Steps to add Circuit Breaker support:
+1) Add below dependencies in OLX-Advertise pom.xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
+</dependency>		
+ 			
+<dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-circuitbreaker-resilience4j</artifactId>
+    </dependency>
+<dependency>
+    <groupId>io.github.resilience4j</groupId>
+    <artifactId>resilience4j-spring-boot2</artifactId>
+    <version>1.7.0</version>
+</dependency>
+
+2) Add below configuration in OLX-Advertise application.yml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoint:
+    health:
+      show-details: always
+      
+resilience4j:
+  circuitbreaker:
+    instances:
+      AUTH_TOKEN_VALIDATION:
+        registerHealthIndicator: true
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+
+3) Finally add isLoggedInUser() method with @CircuitBreaker annotation:
+	@Override
+	@CircuitBreaker(name = "AUTH_TOKEN_VALIDATION", fallbackMethod = "fallbackForIsLoggedInUser")
+	public boolean isLoggedInUser(String authToken) {
+		HttpHeaders headers = new HttpHeaders();
+		headers.set("Authorization", authToken);
+		HttpEntity entity = new HttpEntity(headers);
+		ResponseEntity<Boolean> result = 
+			this.restTemplate.exchange("http://API-GATEWAY/users/token/validate",  
+					HttpMethod.GET, entity, Boolean.class);
+		return result.getBody();
+	}
+
+4) Run the health actuator on OLX-Advertise port:
+http://localhost:9002/actuator/health
+
+5) Make several calls to post new advertises & observe in health dashboard how circuit's state is changing.

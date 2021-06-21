@@ -1,0 +1,29 @@
+Steps to run OLX Microservices App:
+
+Database Setup:
+A) Create 3 databases 'olx-users', 'olx-masterdata' & olx-advertises'
+B) Create 'users' table inside 'olx-users' database with columns mentioned inside UserEntity.java. Insert few users inside the table & make sure roles start with the word 'ROLE_' i.e. ROLE_USER, ROLE_ADMIN, ROLE_MANAGER etc.
+C) Create 'categories' table inside 'olx-masterdata' database with columns mentioned inside CategoryEntity.java. Insert few categories like Furniture, Car, Real Estate etc. inside the 'categories' table.
+D) Create 'advertises' table inside 'olx-advertises' database with columns mentioned inside AdvertiseEntity.java.
+
+1) Start Eureka Server (port 8761) - Confirm http://localhost:8761 is working fine.
+2) Make sure you have created a github repo, for example olx-config'.
+3) Create separate .yml file for every microservice. The file names must be same as property spring.application.name i.e. olx-login-service.yml, olx-advertise-service.yml & olx-masterdata-service.yml
+4) Move frequently changing properties from every microservice application.yml to github yml file.
+5) Configure your github account related configuration inside application.yml of Config Server app & then start the Config Server (port 8888). Make sure below URLs are working fine-
+	- http://localhost:8888/olx-login-service/default
+	- http://localhost:8888/olx-advertise-service/default
+	- http://localhost:8888/olx-masterdata-service/default
+6) Download zipkin java based jar at https://zipkin.io/pages/quickstart.html
+7) Run Zipkin server on command prompt using below command-
+	java -jar zipkin-server-2.23.2-exec.jar
+   Make sure http://localhost:9411 is working fine.
+8) Start OLX-Login microservice. (port 9000)
+9) Start OLX-Masterdata microservice. (port 9001)
+10) Start OLX-Advertise microservice. (port 9002)
+11) Start API Gateway (port 9191)
+12) Refresh Eureka Server home page http://localhost:8761 & make sure 3 microservices, config server & API gateway is listed under services list.
+13) Finally hit your microservices through API gateway using Postman. i.e.
+	http://localhost:9191/users/authenticate - POST
+	http://localhost:9191/olx-adv/advertise - POST
+14) Make sure proper distributed tracing events are being logged using zipkin dashboard @ http://localhost:9411
